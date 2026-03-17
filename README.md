@@ -1,4 +1,4 @@
-# Bill Analyzer API - Production-Level Project
+# Fast-Bill - Bill Analyzer API
 
 A complete FastAPI-based bill analysis system with forgery detection and intelligent query capabilities.
 
