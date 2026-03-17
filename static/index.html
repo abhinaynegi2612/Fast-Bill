@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Analyzer Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#4F46E5"/>
+                    <path d="M8 12h16M8 16h12M8 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <h1>Bill Analyzer</h1>
+            </div>
+            <div class="health-status" id="healthStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking...</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="forgery">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                    Forgery Detection
+                </button>
+                <button class="tab-btn" data-tab="reader">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <path d="M14 2v6h6"/>
+                        <path d="M16 13H8"/>
+                        <path d="M16 17H8"/>
+                        <path d="M10 9H8"/>
+                    </svg>
+                    Bill Reader
+                </button>
+            </div>
+
+            <!-- Module 1: Forgery Detection -->
+            <div id="forgery" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🔍 Detect Bill Forgery</h2>
+                        <p>Upload original and suspected bills to detect tampering</p>
+                    </div>
+                    
+                    <div class="upload-section">
+                        <div class="upload-box" id="originalDrop">
+                            <input type="file" id="originalFile" accept=".pdf,.png,.jpg,.jpeg" hidden>
+                            <div class="upload-content">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <path d="M17 8l-5-5-5 5"/>
+                                    <path d="M12 3v12"/>
+                                </svg>
+                                <h3>Drop Original Bill</h3>
+                                <p>or <span class="browse">browse</span> to upload</p>
+                                <span class="file-types">PDF, PNG, JPG</span>
+                            </div>
+                            <div class="file-info hidden" id="originalInfo">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#10B981">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <path d="M14 2v6h6"/>
+                                </svg>
+                                <div class="file-details">
+                                    <span class="filename" id="originalFilename"></span>
+                                    <span class="filesize" id="originalFilesize"></span>
+                                </div>
+                                <button class="remove-btn" onclick="removeFile('original')">×</button>
+                            </div>
+                        </div>
+
+                        <div class="upload-box" id="suspectedDrop">
+                            <input type="file" id="suspectedFile" accept=".pdf,.png,.jpg,.jpeg" hidden>
+                            <div class="upload-content">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <path d="M12 9v4"/>
+                                    <path d="M12 17h.01"/>
+                                </svg>
+                                <h3>Drop Suspected Bill</h3>
+                                <p>or <span class="browse">browse</span> to upload</p>
+                                <span class="file-types">PDF, PNG, JPG</span>
+                            </div>
+                            <div class="file-info hidden" id="suspectedInfo">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#DC2626">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <path d="M12 9v4"/>
+                                    <path d="M12 17h.01"/>
+                                </svg>
+                                <div class="file-details">
+                                    <span class="filename" id="suspectedFilename"></span>
+                                    <span class="filesize" id="suspectedFilesize"></span>
+                                </div>
+                                <button class="remove-btn" onclick="removeFile('suspected')">×</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="analyze-btn" id="forgeryAnalyze" disabled>
+                        <span class="btn-text">Detect Forgery</span>
+                        <span class="spinner hidden"></span>
+                    </button>
+
+                    <!-- Results Section -->
+                    <div id="forgeryResults" class="results hidden">
+                        <div class="result-header">
+                            <div class="verdict" id="verdict">
+                                <span class="verdict-icon"></span>
+                                <span class="verdict-text"></span>
+                            </div>
+                            <div class="confidence" id="confidence"></div>
+                        </div>
+
+                        <div class="reasons-section">
+                            <h4>Detection Reasons</h4>
+                            <ul id="reasonsList"></ul>
+                        </div>
+
+                        <div class="checks-section">
+                            <h4>Detailed Checks</h4>
+                            <div id="checksList"></div>
+                        </div>
+
+                        <div class="metadata-section">
+                            <div class="metadata-col">
+                                <h4>Original Metadata</h4>
+                                <pre id="originalMetadata"></pre>
+                            </div>
+                            <div class="metadata-col">
+                                <h4>Suspected Metadata</h4>
+                                <pre id="suspectedMetadata"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 2: Bill Reader -->
+            <div id="reader" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📄 Intelligent Bill Reader</h2>
+                        <p>Upload a bill and ask questions in natural language</p>
+                    </div>
+
+                    <div class="reader-layout">
+                        <div class="reader-left">
+                            <div class="upload-box single" id="readerDrop">
+                                <input type="file" id="readerFile" accept=".pdf,.png,.jpg,.jpeg" hidden>
+                                <div class="upload-content">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <path d="M14 2v6h6"/>
+                                        <path d="M16 13H8"/>
+                                        <path d="M16 17H8"/>
+                                        <path d="M10 9H8"/>
+                                    </svg>
+                                    <h3>Upload Bill</h3>
+                                    <p>or <span class="browse">browse</span></p>
+                                </div>
+                                <div class="file-info hidden" id="readerInfo">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#10B981">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <path d="M14 2v6h6"/>
+                                    </svg>
+                                    <div class="file-details">
+                                        <span class="filename" id="readerFilename"></span>
+                                        <span class="filesize" id="readerFilesize"></span>
+                                    </div>
+                                    <button class="remove-btn" onclick="removeFile('reader')">×</button>
+                                </div>
+                            </div>
+
+                            <button class="parse-btn" id="parseBtn" disabled>
+                                <span class="btn-text">Parse Bill</span>
+                                <span class="spinner hidden"></span>
+                            </button>
+
+                            <!-- Parsed Data Preview -->
+                            <div id="parsedData" class="parsed-data hidden">
+                                <h4>Parsed Data</h4>
+                                <div class="data-grid">
+                                    <div class="data-item">
+                                        <label>Vendor</label>
+                                        <span id="vendorName">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <label>Bill #</label>
+                                        <span id="billNumber">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <label>Date</label>
+                                        <span id="billDate">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <label>Items</label>
+                                        <span id="itemCount">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <label>Subtotal</label>
+                                        <span id="subtotal">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <label>GST</label>
+                                        <span id="gstAmount">-</span>
+                                    </div>
+                                    <div class="data-item highlight">
+                                        <label>Total</label>
+                                        <span id="totalAmount">-</span>
+                                    </div>
+                                </div>
+
+                                <div class="items-table">
+                                    <h4>Items</h4>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Item</th>
+                                                <th>Qty</th>
+                                                <th>Price</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsTableBody"></tbody>
+                                    </table>
+                                </div>
+
+                                <button class="export-btn" onclick="exportToCSV()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <path d="M7 10l5 5 5-5"/>
+                                        <path d="M12 15V3"/>
+                                    </svg>
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="reader-right">
+                            <div class="chat-section">
+                                <h4>Ask About Your Bill</h4>
+                                <div class="quick-commands">
+                                    <button class="cmd-btn" onclick="sendCommand('total')">Total</button>
+                                    <button class="cmd-btn" onclick="sendCommand('gst amount')">GST</button>
+                                    <button class="cmd-btn" onclick="sendCommand('most expensive item')">Most Expensive</button>
+                                    <button class="cmd-btn" onclick="sendCommand('list all items')">List Items</button>
+                                    <button class="cmd-btn" onclick="sendCommand('summary')">Summary</button>
+                                    <button class="cmd-btn" onclick="sendCommand('average price')">Average</button>
+                                </div>
+
+                                <div class="chat-input">
+                                    <input type="text" id="commandInput" placeholder="Ask anything... (e.g., 'How many items?' 'Cheapest item?')" disabled>
+                                    <button id="sendBtn" onclick="sendCustomCommand()" disabled>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M22 2L11 13"/>
+                                            <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div id="chatHistory" class="chat-history">
+                                    <div class="welcome-msg">
+                                        <p>👋 Upload a bill and ask questions like:</p>
+                                        <ul>
+                                            <li>"What is the total amount?"</li>
+                                            <li>"How much GST was charged?"</li>
+                                            <li>"Which item is most expensive?"</li>
+                                            <li>"List all items"</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Bill Analyzer API v1.0 | FastAPI + Python</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
